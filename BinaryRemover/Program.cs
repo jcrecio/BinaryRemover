@@ -4,16 +4,10 @@
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using System.Threading.Tasks;
 
     class Program
     {
         static void Main(string[] args)
-        {
-            MainAsync(args);
-        }
-
-        async static void MainAsync(string[] args)
         {
             var directoryRootPath = args[0];
 
@@ -22,7 +16,7 @@
             var binaryDirectories = GetBinaryDirectories(directoryInfo);
             var binaryFilesToRemove = GetFilesToRemoveFromDirectories(binaryDirectories).ToList();
 
-            await RemoveFiles(binaryFilesToRemove);
+            RemoveFiles(binaryFilesToRemove);
         }
 
         private static IEnumerable<DirectoryInfo> GetBinaryDirectories(DirectoryInfo directoryInfo) =>
@@ -32,11 +26,8 @@
                           q.FullName.Contains("bin", StringComparison.InvariantCultureIgnoreCase) ||
                           q.FullName.Contains("obj", StringComparison.InvariantCultureIgnoreCase));
 
-        private static IEnumerable<FileInfo> GetFilesToRemoveFromDirectories(IEnumerable<DirectoryInfo> binaryDirectories)
-        {
-            var files = binaryDirectories.SelectMany(d => d.GetFiles());
-            return files.Where(f => IsRemovableExtension(f));
-        }
+        private static IEnumerable<FileInfo> GetFilesToRemoveFromDirectories(IEnumerable<DirectoryInfo> binaryDirectories) =>
+             binaryDirectories.SelectMany(d => d.GetFiles()).Where(f => IsRemovableExtension(f));
 
         private static bool IsRemovableExtension(FileInfo file)
         {
@@ -48,22 +39,19 @@
                     Path.GetExtension(file.FullName));
         }
 
-        private async static Task RemoveFiles(IEnumerable<FileInfo> files)
+        private static void RemoveFiles(IEnumerable<FileInfo> files)
         {
-            await Task.Run(() =>
+            foreach (var file in files)
             {
-                foreach (var file in files)
+                try
                 {
-                    try
-                    {
-                        File.Delete(file.FullName);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.StackTrace);
-                    }
+                    File.Delete(file.FullName);
                 }
-            });
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.StackTrace);
+                }
+            }
         }
     }
 }
